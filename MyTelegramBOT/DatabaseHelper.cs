@@ -34,5 +34,9 @@
         {
             return $"DELETE FROM [SUBSCRIBE] WHERE USERID = {userId} AND REPOSITORYID = {repoId}";
         }
+        public static string DeleteAllSubscribe (int userId)
+        {
+            return $"DELETE FROM [SUBSCRIBE] WHERE USERID = {userId}";
+        }
     }
 }

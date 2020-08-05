@@ -25,11 +25,12 @@ namespace MyTelegramBOT
 
             botClient.StopReceiving();
         }
+        private static long id { get; set; }
         static void Bot_OnMessage(object sender, MessageEventArgs e)
         {
             if (e.Message.Text != null)
             {
-                var id = e.Message.Chat.Id;
+                id = e.Message.Chat.Id;
                 var user = DatabaseWrapper.ExecuteReader(DatabaseHelper.SelectUser(id));
                 var message = e.Message.Text;
                 Console.WriteLine($"Received a text message in chat {id}.");
@@ -46,9 +47,13 @@ namespace MyTelegramBOT
                 {
                     Commands.Subscribe(id, message);
                 }
-                else if (message.Contains("/unsubscribe") && message.Split(' ')[0] == "/unsubscribe")
+                else if (message.Contains("/unsubscribe ") && message.Split(' ')[0] == "/unsubscribe")
                 {
                     Commands.Unsubscribe(id, message);
+                }
+                else if(message == "/unsubscribeall")
+                {
+                    Commands.UnsubscribeAll(id);
                 }
                 else if (message == "/list")
                 {
@@ -60,11 +65,11 @@ namespace MyTelegramBOT
                 }
                 else
                 {
-                    SendMessage("Unknown command. Enter /info for more information.", id);
+                    SendMessage("Unknown command. Enter /info for more information.");
                 }
             }
         }
-        public static async void SendMessage (string message, long id)
+        public static async void SendMessage (string message)
         {
             await botClient.SendTextMessageAsync(
                                     chatId: id,
