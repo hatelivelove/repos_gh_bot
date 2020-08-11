@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using MyTelegramBOT.Model;
+using System;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 
@@ -6,11 +8,25 @@ namespace MyTelegramBOT
 {
     class Program
     {
-        private static ITelegramBotClient botClient;
+        private static ListCommands _commands = new ListCommands();
+        public async static void Bot_OnMessage(object sender, MessageEventArgs e)
+        {
+            var startup = new Startup();
+            var botClient = startup.botClient;
+            foreach (var command in _commands.Get())
+            {
+                if (e.Message.Text.Contains(command.Name))
+                {
+                    await command.Execute(e.Message, botClient);
+                }
+            }
+            botClient.StartReceiving();
 
+        }
         static void Main()
         {
-            botClient = new TelegramBotClient(BotConfig.Token);
+            var startup = new Startup();
+            var botClient = startup.botClient;
             var me = botClient.GetMeAsync().Result;
 
             Console.WriteLine(
@@ -25,56 +41,7 @@ namespace MyTelegramBOT
 
             botClient.StopReceiving();
         }
-        private static long id { get; set; }
-        static void Bot_OnMessage(object sender, MessageEventArgs e)
-        {
-            if (e.Message.Text != null)
-            {
-                id = e.Message.Chat.Id;
-                var user = DatabaseWrapper.ExecuteReader(DatabaseHelper.SelectUser(id));
-                var message = e.Message.Text;
-                Console.WriteLine($"Received a text message in chat {id}.");
-
-                if (user.Count == 0)
-                {
-                    DatabaseWrapper.ExecuteNonQuery(DatabaseHelper.InsertUser(id));
-                }
-                if (message == "/info")
-                {
-                    Commands.Info(id);
-                }
-                else if (message.Contains("/subscribe"))
-                {
-                    Commands.Subscribe(id, message);
-                }
-                else if (message.Contains("/unsubscribe ") && message.Split(' ')[0] == "/unsubscribe")
-                {
-                    Commands.Unsubscribe(id, message);
-                }
-                else if(message == "/unsubscribeall")
-                {
-                    Commands.UnsubscribeAll(id);
-                }
-                else if (message == "/list")
-                {
-                    Commands.List(id, message);
-                }
-                else if(message == "/news")
-                {
-                    Commands.News(id);
-                }
-                else
-                {
-                    SendMessage("Unknown command. Enter /info for more information.");
-                }
-            }
-        }
-        public static async void SendMessage (string message)
-        {
-            await botClient.SendTextMessageAsync(
-                                    chatId: id,
-                                    text: message
-                                  );
-        }
+       
+       
     }
 }
